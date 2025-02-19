@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@layer components {
+    .h1 {
+        @apply mb-2 px-2 text-gray-900 text-3xl dark:text-white;
+    }
+
+    .h2 {
+        @apply mb-1.5 px-2 text-gray-800 text-2xl italic dark:text-white;
+    }
+
+    .p, .span {
+        @apply mb-1 text-gray-500 text-base dark:text-white;
+    }
+
+    .a {
+        @apply mb-1 text-gray-500 text-base dark:text-white;
+    }
+
+    .btn {
+        @apply h-8 mb-4 text-base font-bold w-24 rounded-md bg-sky-400 text-white dark:bg-purple-800;
+    }
+
+    .link {
+        @apply font-bold text-blue-300 hover:underline;
+    }
+
+    .input-field {
+        @apply w-full mb-4 px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400;
+    }
+}
+
+
+
+
+
