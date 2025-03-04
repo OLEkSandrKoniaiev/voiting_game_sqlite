@@ -1,69 +1,57 @@
 const express = require('express');
-const {ObjectId} = require('mongodb');
-
 const router = express.Router();
+const {getDB} = require('../services/db.service');
 
 
-let {getCollection} = require('../services/db.service');
-
-// Endpoint for new joke from out DB
-router.get('/', async (req, res) => {
+// Endpoint for fetching a random joke
+router.get('/', (req, res) => {
     try {
-        const collection = getCollection();
-        const count = await collection.countDocuments();
-        if (count === 0) {
+        const db = getDB();
+        let joke = db.prepare('SELECT * FROM jokes ORDER BY RANDOM() LIMIT 1').get();
+
+        if (!joke) {
             return res.status(404).json({error: 'No jokes found'});
         }
 
-        const randomIndex = Math.floor(Math.random() * count);
-        const randomJoke = await collection.find().limit(1).skip(randomIndex).toArray();
+        // Парсимо votes, якщо воно збережене у вигляді рядка JSON
+        if (typeof joke.votes === "string") {
+            joke.votes = JSON.parse(joke.votes);
+        }
 
-        res.json(randomJoke[0]);
+        res.json(joke);
     } catch (error) {
         console.error(error);
         res.status(500).json({error: 'Failed to fetch a joke'});
     }
 });
 
-// Endpoint for count reactions
-// I cannot use POST method, due to a conflict with the data structure.
-// If we use the POST method, then we don't need the ‘votes’ field at least and ‘availableVotes’ at most.
-// Then each reaction will be a separate object in the database.
-// And in this case, it would be worth implementing a user with authorisation
-router.patch('/:id', async (req, res) => {
+// Endpoint for updating a joke's votes
+router.patch('/:id', (req, res) => {
     try {
         const {id} = req.params;
         const {label} = req.query;
-
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({error: 'Invalid joke ID'});
-        }
 
         if (!label) {
             return res.status(400).json({error: 'Label query parameter is required'});
         }
 
-        const collection = getCollection();
-        const joke = await collection.findOne({_id: new ObjectId(id)});
+        const db = getDB();
+        const joke = db.prepare('SELECT * FROM jokes WHERE id = ?').get(id);
         if (!joke) {
             return res.status(404).json({error: 'Joke not found'});
         }
 
-        const voteIndex = joke.votes.findIndex(vote => vote.label === label);
+        // Votes are stored as JSON in SQLite
+        const votes = JSON.parse(joke.votes);
+        const voteIndex = votes.findIndex(vote => vote.label === label);
+
         if (voteIndex === -1) {
             return res.status(400).json({error: 'Invalid vote label'});
         }
 
-        const updateQuery = {[`votes.${voteIndex}.value`]: 1};
+        votes[voteIndex].value += 1;
 
-        const result = await collection.updateOne(
-            {_id: new ObjectId(id)},
-            {$inc: updateQuery}
-        );
-
-        if (result.modifiedCount === 0) {
-            return res.status(500).json({error: 'Failed to update joke'});
-        }
+        db.prepare('UPDATE jokes SET votes = ? WHERE id = ?').run(JSON.stringify(votes), id);
 
         res.json({message: 'Vote updated successfully'});
     } catch (error) {
@@ -73,32 +61,23 @@ router.patch('/:id', async (req, res) => {
 });
 
 // Endpoint for updating joke's question or answer
-router.put('/:id', async (req, res) => {
+router.put('/:id', (req, res) => {
     try {
         const {id} = req.params;
         const {question, answer} = req.body;
-
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({error: 'Invalid joke ID'});
-        }
 
         if (!question && !answer) {
             return res.status(400).json({error: 'No update fields provided'});
         }
 
-        const updateQuery = {};
-        if (question) updateQuery.question = question;
-        if (answer) updateQuery.answer = answer;
-
-        const collection = getCollection();
-        const result = await collection.updateOne(
-            {_id: new ObjectId(id)},
-            {$set: updateQuery}
-        );
-
-        if (result.modifiedCount === 0) {
-            return res.status(404).json({error: 'Joke not found or no changes made'});
+        const db = getDB();
+        const existingJoke = db.prepare('SELECT * FROM jokes WHERE id = ?').get(id);
+        if (!existingJoke) {
+            return res.status(404).json({error: 'Joke not found'});
         }
+
+        db.prepare('UPDATE jokes SET question = COALESCE(?, question), answer = COALESCE(?, answer) WHERE id = ?')
+            .run(question, answer, id);
 
         res.json({message: 'Joke updated successfully'});
     } catch (error) {
@@ -108,18 +87,14 @@ router.put('/:id', async (req, res) => {
 });
 
 // Endpoint for deleting a joke
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', (req, res) => {
     try {
         const {id} = req.params;
+        const db = getDB();
 
-        if (!ObjectId.isValid(id)) {
-            return res.status(400).json({error: 'Invalid joke ID'});
-        }
+        const result = db.prepare('DELETE FROM jokes WHERE id = ?').run(id);
 
-        const collection = getCollection();
-        const result = await collection.deleteOne({_id: new ObjectId(id)});
-
-        if (result.deletedCount === 0) {
+        if (result.changes === 0) {
             return res.status(404).json({error: 'Joke not found or already deleted'});
         }
 
@@ -143,37 +118,33 @@ router.post('/add', async (req, res) => {
             return res.status(500).json({error: 'Invalid API response'});
         }
 
-        const collection = getCollection();
-
-        const existingJoke = await collection.findOne({
-            question: data.question,
-            answer: data.answer
-        });
+        const db = getDB();
+        const existingJoke = db.prepare('SELECT * FROM jokes WHERE question = ? AND answer = ?').get(data.question, data.answer);
 
         if (existingJoke) {
             return res.status(409).json({error: 'Joke already exists'});
         }
 
-        const joke_data = {
+        const jokeData = {
             question: data.question,
             answer: data.answer,
-            votes: [
+            votes: JSON.stringify([
                 {value: 0, label: "funny"},
                 {value: 0, label: "like"},
                 {value: 0, label: "heart"},
                 {value: 0, label: "dislike"},
                 {value: 0, label: "angry"}
-            ],
-            availableVotes: ["funny", "like", "heart", "dislike", "angry"]
+            ]),
+            availableVotes: JSON.stringify(["funny", "like", "heart", "dislike", "angry"])
         };
 
-        const result = await collection.insertOne(joke_data);
+        const result = db.prepare('INSERT INTO jokes (question, answer, votes, availableVotes) VALUES (?, ?, ?, ?)')
+            .run(jokeData.question, jokeData.answer, jokeData.votes, jokeData.availableVotes);
 
-        console.log(`Joke added: ${result.insertedId}`);
-        res.json(joke_data);
+        res.json({id: result.lastInsertRowid, ...jokeData});
     } catch (error) {
         console.error(error);
-        res.status(500).json({error: error.message || 'Failed to fetch joke'});
+        res.status(500).json({error: 'Failed to fetch joke'});
     }
 });
 

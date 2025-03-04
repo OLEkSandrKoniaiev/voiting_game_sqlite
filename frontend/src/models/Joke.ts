@@ -3,7 +3,7 @@ export interface Joke {
     "answer": string,
     "votes": Vote[],
     "availableVotes": string[],
-    "_id": string
+    "id": string
 }
 
 

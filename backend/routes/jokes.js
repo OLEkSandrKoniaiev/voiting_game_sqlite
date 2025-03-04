@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-
-const {getCollection} = require('../services/db.service');
-
+const {getDB} = require('../services/db.service');
 
 router.get('/', async (req, res) => {
     try {
@@ -14,11 +12,14 @@ router.get('/', async (req, res) => {
         if (isNaN(page) || page < 1) page = 1;
         if (isNaN(limit) || limit < 1) limit = 10;
 
-        const skip = (page - 1) * limit;
+        const offset = (page - 1) * limit;
+        const db = getDB();
 
-        const collection = getCollection();
-        const jokes = await collection.find().skip(skip).limit(limit).toArray();
-        const totalJokes = await collection.countDocuments();
+        // Отримання жартів з бази
+        const jokes = db.prepare('SELECT * FROM jokes LIMIT ? OFFSET ?').all(limit, offset);
+
+        // Отримання загальної кількості жартів
+        const totalJokes = db.prepare('SELECT COUNT(*) AS count FROM jokes').get().count;
 
         res.json({
             totalJokes,

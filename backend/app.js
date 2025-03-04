@@ -19,7 +19,7 @@ app.use((req, res, next) => {
     next();
 });
 
-connectDB().then();
+connectDB();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

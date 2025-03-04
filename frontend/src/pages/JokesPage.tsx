@@ -26,12 +26,21 @@ export const JokesPage = () => {
     }, [page]);
 
     const handleDelete = async (id: string) => {
-        await jokesService.deleteJoke(id);
-        fetchJokes().then();
+        if (!id) {
+            console.error('Invalid joke ID');
+            return;
+        }
+
+        try {
+            await jokesService.deleteJoke(id);
+            fetchJokes().then();
+        } catch (error) {
+            console.error('Error deleting joke:', error);
+        }
     };
 
     const handleEdit = (joke: Joke) => {
-        setEditJoke({id: joke._id, question: joke.question, answer: joke.answer});
+        setEditJoke({id: joke.id, question: joke.question, answer: joke.answer});
     };
 
     const handleSaveEdit = async () => {

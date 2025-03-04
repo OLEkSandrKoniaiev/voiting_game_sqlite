@@ -1,26 +1,30 @@
-const {MongoClient} = require('mongodb');
+const Database = require('better-sqlite3');
 
-const uri = 'mongodb://root:root@localhost:27017/';
-const client = new MongoClient(uri);
+let db;
 
-let db, collection;
-
-async function connectDB() {
+function connectDB() {
     try {
-        await client.connect();
-        db = client.db('joke_game');
-        collection = db.collection('jokes');
-        console.log('Connected to MongoDB');
+        db = new Database('jokes.db');
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS jokes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                question TEXT UNIQUE,
+                answer TEXT,
+                votes TEXT,
+                availableVotes TEXT
+            )
+        `);
+        console.log('Connected to SQLite');
     } catch (error) {
-        console.error('Failed to connect to MongoDB', error);
+        console.error('Failed to connect to SQLite', error);
     }
 }
 
-function getCollection() {
-    if (!collection) {
+function getDB() {
+    if (!db) {
         throw new Error('Database not initialized. Call connectDB() first.');
     }
-    return collection;
+    return db;
 }
 
-module.exports = {connectDB, getCollection};
+module.exports = { connectDB, getDB };

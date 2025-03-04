@@ -16,11 +16,11 @@ export const JokesComponent = ({jokes, loading, handleDelete, handleEdit}: Jokes
     return (
         <div>
             {jokes.map((joke) => (
-                <div key={joke._id} className='flex flex-col items-start'>
+                <div key={joke.id} className='flex flex-col items-start'>
                     <JokeComponent question={joke.question} answer={joke.answer}/>
                     <div className='flex flex-row justify-between w-52 pl-2.5'>
                         <button onClick={() => handleEdit(joke)} className='btn'>Edit</button>
-                        <button onClick={() => handleDelete(joke._id)} className='btn'>Delete</button>
+                        <button onClick={() => handleDelete(joke.id)} className='btn'>Delete</button>
                     </div>
                 </div>
             ))}

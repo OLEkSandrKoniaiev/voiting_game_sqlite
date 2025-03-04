@@ -20,6 +20,7 @@ export const JokePage = () => {
     const fetchJoke = async () => {
         setLoading(true);
         const response = await jokesService.getJoke();
+        console.log("Fetched joke:", response);
         setJoke(response);
         setSelectedVote(null);
         setLoading(false);
@@ -32,7 +33,7 @@ export const JokePage = () => {
     const handleVote = async (voteLabel: string) => {
         if (!joke || selectedVote) return;
 
-        await jokesService.voteJoke(joke._id, voteLabel);
+        await jokesService.voteJoke(joke.id, voteLabel);
         setSelectedVote(voteLabel);
 
         setJoke(prev => prev ? {
@@ -44,6 +45,19 @@ export const JokePage = () => {
 
         setTimeout(fetchJoke, 2000);
     };
+
+    // ✅ Гарантовано отримуємо масив `availableVotes`
+    let availableVotes: string[] = [];
+    if (joke) {
+        try {
+            availableVotes = Array.isArray(joke.availableVotes)
+                ? joke.availableVotes
+                : JSON.parse(joke.availableVotes || '[]');
+        } catch (error) {
+            console.error("Failed to parse availableVotes:", error);
+            availableVotes = [];
+        }
+    }
 
     return (
         <div>
@@ -58,8 +72,9 @@ export const JokePage = () => {
                 <div className='flex flex-col items-center mt-12'>
                     <JokeComponent question={joke.question} answer={joke.answer}/>
                     <div className="flex flex-row justify-around w-128 mt-6">
-                        {joke.availableVotes.map((availableVote) => {
-                            const voteValue = joke.votes.find(vote => vote.label === availableVote)?.value || 0;
+                        {availableVotes.map((availableVote) => {
+                            // ✅ Гарантуємо, що `votes` існують
+                            const voteValue = (joke.votes || []).find(vote => vote.label === availableVote)?.value || 0;
                             return (
                                 <button
                                     key={availableVote}

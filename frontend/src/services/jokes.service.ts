@@ -52,6 +52,10 @@ export const jokesService = {
 
     deleteJoke: async (id: string): Promise<string> => {
         try {
+            if (!id) {
+                throw new Error("Invalid ID");
+            }
+
             const response = await fetch(`${BASE_URL}/joke/${id}`, {
                 method: "DELETE",
                 headers: {
@@ -73,6 +77,10 @@ export const jokesService = {
 
     updateJoke: async (id: string, updateData: { question?: string; answer?: string }): Promise<string> => {
         try {
+            if (!id) {
+                throw new Error("Invalid ID");
+            }
+
             const response = await fetch(`${BASE_URL}/joke/${id}`, {
                 method: "PUT",
                 headers: {
