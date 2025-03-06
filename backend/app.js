@@ -1,17 +1,17 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+let createError = require('http-errors');
+let express = require('express');
+let path = require('path');
+let cookieParser = require('cookie-parser');
+let logger = require('morgan');
 
 const {connectDB} = require('./services/db.service');
 
-var indexRouter = require('./routes/index');
+let indexRouter = require('./routes/index');
 let jokeRouter = require("./routes/joke");
 let jokesRouter = require("./routes/jokes");
 
 
-var app = express();
+let app = express();
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE');
