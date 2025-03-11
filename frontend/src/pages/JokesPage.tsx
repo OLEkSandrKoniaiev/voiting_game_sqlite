@@ -1,19 +1,24 @@
 import {useEffect, useState} from "react";
 import {jokesService} from "../services/jokes.service.ts";
 import {Joke} from "../models/Joke.ts";
+import {useSearchParams} from "react-router-dom";
 import {Link} from "react-router-dom";
 import {JokesComponent} from "../components/JokesComponent.tsx";
 
 export const JokesPage = () => {
     const [jokes, setJokes] = useState<Joke[]>([]);
-    const [page, setPage] = useState<number>(1);
     const [totalPages, setTotalPages] = useState<number>(1);
     const [loading, setLoading] = useState<boolean>(false);
     const [editJoke, setEditJoke] = useState<{ id: string; question: string; answer: string } | null>(null);
 
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const page = Number(searchParams.get("page")) || 1;
+    const limit = Number(searchParams.get("limit")) || 5;
+
     const fetchJokes = async () => {
         setLoading(true);
-        const response = await jokesService.getJokes(page, 5);
+        const response = await jokesService.getJokes(page, limit);
         if (response) {
             setJokes(response.data);
             setTotalPages(response.totalPages);
@@ -23,7 +28,11 @@ export const JokesPage = () => {
 
     useEffect(() => {
         fetchJokes().then();
-    }, [page]);
+    }, [page, limit]);
+
+    const handlePageChange = (newPage: number) => {
+        setSearchParams({page: String(newPage), limit: String(limit)});
+    };
 
     const handleDelete = async (id: string) => {
         if (!id) {
@@ -87,15 +96,17 @@ export const JokesPage = () => {
             </div>
 
             <div className="flex flex-row justify-around mt-6 w-full">
-                <button onClick={() => setPage((prev) =>
-                    Math.max(prev - 1, 1))} disabled={page === 1}
-                        className='btn'>
+                <button
+                    onClick={() => handlePageChange(Math.max(page - 1, 1))}
+                    disabled={page === 1}
+                    className="btn">
                     Prev
                 </button>
-                <span className='span'>Page {page} of {totalPages}</span>
-                <button onClick={() => setPage((prev) =>
-                    Math.min(prev + 1, totalPages))} disabled={page === totalPages}
-                        className='btn'>
+                <span className="span">Page {page} of {totalPages}</span>
+                <button
+                    onClick={() => handlePageChange(Math.min(page + 1, totalPages))}
+                    disabled={page === totalPages}
+                    className="btn">
                     Next
                 </button>
             </div>
