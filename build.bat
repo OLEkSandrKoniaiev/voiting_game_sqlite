@@ -1,6 +1,17 @@
 @echo off
 set ARCHIVE_NAME=voiting_game.zip
 
+cd backend
+call npm test
+
+:: Якщо тести не пройшли, зупиняємо скрипт
+if %ERRORLEVEL% neq 0 (
+    echo Tests failed! Stopping build.
+    exit /b 1
+)
+
+cd ..
+
 :: Видаляємо старий архів, якщо він є
 if exist %ARCHIVE_NAME% del %ARCHIVE_NAME%
 
