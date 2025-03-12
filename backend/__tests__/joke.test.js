@@ -228,4 +228,3 @@ describe('Jokes API', () => {
     //     expect(res.body.message).toBe('Joke deleted successfully');
     // });
 });
-
