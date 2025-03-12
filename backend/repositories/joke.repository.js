@@ -3,6 +3,7 @@ const {getDB} = require('../services/db.service');
 class JokeRepository {
     static getRandomJoke() {
         const db = getDB();
+        // console.log("Цей лог з'явиться, якщо база використовується!");
         return db.prepare('SELECT * FROM jokes ORDER BY RANDOM() LIMIT 1').get();
     }
 

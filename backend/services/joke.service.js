@@ -1,7 +1,8 @@
 const JokeRepository = require('../repositories/joke.repository');
 
-class JokeService {
-    static getRandomJoke() {
+const JokeService = {
+    getRandomJoke: () => {
+        // console.log("Цей лог з'явиться, якщо сервіс використовується!");
         const joke = JokeRepository.getRandomJoke();
         if (!joke) return null;
 
@@ -9,9 +10,9 @@ class JokeService {
             joke.votes = JSON.parse(joke.votes);
         }
         return joke;
-    }
+    },
 
-    static getJokes(page, limit) {
+    getJokes: (page, limit) => {
         page = parseInt(page);
         limit = parseInt(limit);
 
@@ -28,9 +29,9 @@ class JokeService {
             limit,
             data: jokes,
         };
-    }
+    },
 
-    static async addJokeFromAPI() {
+    addJokeFromAPI: async () => {
         const response = await fetch('https://teehee.dev/api/joke');
         if (!response.ok) {
             throw new Error('Invalid API response');
@@ -46,7 +47,7 @@ class JokeService {
             throw new Error('Joke already exists');
         }
 
-        const votes = JSON.stringify([
+        let votes = JSON.stringify([
             {value: 0, label: "funny"},
             {value: 0, label: "like"},
             {value: 0, label: "heart"},
@@ -58,10 +59,12 @@ class JokeService {
 
         const jokeId = JokeRepository.createJoke(data.question, data.answer, votes, availableVotes);
 
-        return {id: jokeId, question: data.question, answer: data.answer, votes, availableVotes};
-    }
+        votes = JSON.parse(votes);
 
-    static updateJokeVotes(id, label) {
+        return {id: jokeId, question: data.question, answer: data.answer, votes, availableVotes};
+    },
+
+    updateJokeVotes: (id, label) => {
         const joke = JokeRepository.getJokeById(id);
         if (!joke) throw new Error('Joke not found');
 
@@ -75,22 +78,22 @@ class JokeService {
         JokeRepository.updateJokeVotes(id, JSON.stringify(votes));
 
         return {message: 'Vote updated successfully'};
-    }
+    },
 
-    static updateJokeText(id, question, answer) {
+    updateJokeText: (id, question, answer) => {
         const existingJoke = JokeRepository.getJokeById(id);
         if (!existingJoke) throw new Error('Joke not found');
 
         JokeRepository.updateJokeText(id, question, answer);
         return {message: 'Joke updated successfully'};
-    }
+    },
 
-    static deleteJoke(id) {
+    deleteJoke: (id) => {
         const result = JokeRepository.deleteJoke(id);
         if (result.changes === 0) throw new Error('Joke not found or already deleted');
 
         return {message: 'Joke deleted successfully'};
     }
-}
+};
 
 module.exports = JokeService;
