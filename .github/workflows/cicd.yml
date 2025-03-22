@@ -3,10 +3,10 @@ name: CI Pipeline
 on:
   push:
     branches:
-      - main  # Виконується при пуші в main (або можна замінити на свою гілку)
+      - master  # Виконується при пуші в main (або можна замінити на свою гілку)
   pull_request:
     branches:
-      - main  # Або на pull request у main
+      - master  # Або на pull request у main
 
 jobs:
   test-and-build:
