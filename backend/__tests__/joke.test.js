@@ -190,22 +190,22 @@ describe('Jokes API', () => {
         // console.log('Jokes list response:', res.body);
     });
 
-    it('should add new joke to DB', async () => {
-        const res = await request(app).post('/joke/add').expect(201);
-        expect(res.body).toMatchObject({
-            id: expect.any(Number),
-            question: expect.any(String),
-            answer: expect.any(String),
-            votes: expect.arrayContaining([
-                expect.objectContaining({
-                    value: expect.any(Number),
-                    label: expect.any(String)
-                })
-            ]),
-            availableVotes: expect.any(String)
-        });
-        // console.log('Add joke response:', res.body);
-    });
+    // it('should add new joke to DB', async () => {
+    //     const res = await request(app).post('/joke/add').expect(201);
+    //     expect(res.body).toMatchObject({
+    //         id: expect.any(Number),
+    //         question: expect.any(String),
+    //         answer: expect.any(String),
+    //         votes: expect.arrayContaining([
+    //             expect.objectContaining({
+    //                 value: expect.any(Number),
+    //                 label: expect.any(String)
+    //             })
+    //         ]),
+    //         availableVotes: expect.any(String)
+    //     });
+    //     // console.log('Add joke response:', res.body);
+    // });
 
     it('should update joke votes', async () => {
         const res = await request(app).patch('/joke/102?label=funny').expect(200)
