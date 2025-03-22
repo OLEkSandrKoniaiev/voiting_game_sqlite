@@ -1,0 +1,43 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Виконується при пуші в main (або можна замінити на свою гілку)
+  pull_request:
+    branches:
+      - main  # Або на pull request у main
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest  # Використовуємо контейнер з Ubuntu
+    steps:
+      - name: Checkout репозиторію
+        uses: actions/checkout@v4  # Завантажує код репозиторію
+
+      - name: Встановлення Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # --- Backend ---
+      - name: Встановлення залежностей для backend
+        run: |
+          cd backend
+          npm install
+
+      - name: Запуск тестів для backend
+        run: |
+          cd backend
+          npm test
+
+      # --- Frontend ---
+      - name: Встановлення залежностей для frontend
+        run: |
+          cd frontend
+          npm install
+
+      - name: Білд frontend
+        run: |
+          cd frontend
+          npm run build
